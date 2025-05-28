@@ -1,0 +1,486 @@
+import java.util.*;
+import java.io.*;
+
+class Game {
+    private String name;
+    private String category;
+    private int price;
+    private int quality;
+
+    public Game(String name, String category, int price, int quality) {
+        this.name = name;
+        this.category = category;
+        this.price = price;
+        this.quality = quality;
+    }
+
+    public String getName() { 
+        return name; }
+    public String getCategory() { 
+        return category; }
+    public int getPrice() { 
+        return price; }
+    public int getQuality() { 
+        return quality; }
+
+    @Override
+    public String toString() {
+        return name + " | " + category + " | $" + price + " | Calidad: " + quality;
+    }
+}
+
+class Dataset {
+    private ArrayList<Game> data;
+    private String sortedByAttribute;
+
+    public Dataset(ArrayList<Game> data) {
+        this.data = new ArrayList<>(data);
+        this.sortedByAttribute = "";
+    }
+    public ArrayList<Game> getGamesByPrice(int price) {
+        ArrayList<Game> result = new ArrayList<>();
+        if ("price".equals(sortedByAttribute)) {
+            int low = 0, high = data.size() - 1;
+            while (low <= high) {
+                int mid = (low + high) / 2;
+                int midPrice = data.get(mid).getPrice();
+                if (midPrice == price) {
+                    int i = mid;
+                    while (i >= 0 && data.get(i).getPrice() == price)
+                        result.add(0, data.get(i--));
+                    i = mid + 1;
+                    while (i < data.size() && data.get(i).getPrice() == price)
+                        result.add(data.get(i++));
+                    break;
+                } else if (midPrice < price) {
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
+            }
+        } else {
+            for (Game g : data)
+                if (g.getPrice() == price)
+                    result.add(g);
+        }
+        return result;
+    }
+    public ArrayList<Game> getGamesByPriceRange(int min, int max) {
+        ArrayList<Game> result = new ArrayList<>();
+        if ("price".equals(sortedByAttribute)) {
+            int low = 0, high = data.size() - 1;
+            int start = -1;
+            while (low <= high) {
+                int mid = (low + high) / 2;
+                if (data.get(mid).getPrice() < min) {
+                    low = mid + 1;
+                } else {
+                    start = mid;
+                    high = mid - 1;
+                }
+            }
+            if (start == -1) return result;
+            for (int i = start; i < data.size(); i++) {
+                int price = data.get(i).getPrice();
+                if (price > max) break;
+                result.add(data.get(i));
+            }
+        } else {
+            for (Game g : data) {
+                int p = g.getPrice();
+                if (p >= min && p <= max)
+                    result.add(g);
+            }
+        }
+        return result;
+    }
+    public ArrayList<Game> getGamesByCategory(String category) {
+        ArrayList<Game> result = new ArrayList<>();
+        if ("category".equals(sortedByAttribute)) {
+            int left = 0, right = data.size() - 1;
+            while (left <= right) {
+                int mid = (left + right) / 2;
+                String midCat = data.get(mid).getCategory();
+                int cmp = midCat.compareToIgnoreCase(category);
+                if (cmp == 0) {
+                    int i = mid;
+                    while (i >= 0 && data.get(i).getCategory().equalsIgnoreCase(category))
+                        result.add(0, data.get(i--));
+                    i = mid + 1;
+                    while (i < data.size() && data.get(i).getCategory().equalsIgnoreCase(category))
+                        result.add(data.get(i++));
+                    break;
+                } else if (cmp < 0) {
+                    left = mid + 1;
+                } else {
+                    right = mid - 1;
+                }
+            }
+        } else {
+            for (Game g : data)
+                if (g.getCategory().equalsIgnoreCase(category))
+                    result.add(g);
+        }
+        return result;
+    }
+    public ArrayList<Game> getGamesByQuality(int quality) {
+        ArrayList<Game> result = new ArrayList<>();
+        if ("quality".equals(sortedByAttribute)) {
+            int left = 0, right = data.size() - 1;
+            while (left <= right) {
+                int mid = (left + right) / 2;
+                int q = data.get(mid).getQuality();
+                if (q == quality) {
+                    int i = mid;
+                    while (i >= 0 && data.get(i).getQuality() == quality)
+                        result.add(0, data.get(i--));
+                    i = mid + 1;
+                    while (i < data.size() && data.get(i).getQuality() == quality)
+                        result.add(data.get(i++));
+                    break;
+                } else if (q < quality) {
+                    left = mid + 1;
+                } else {
+                    right = mid - 1;
+                }
+            }
+        } else {
+            for (Game g : data)
+                if (g.getQuality() == quality)
+                    result.add(g);
+        }
+        return result;
+    }
+    public void sortByAlgorithm(String algorithm, String attribute) {
+        Comparator<Game> comp = getComparator(attribute);
+        if (comp == null) {
+            comp = Comparator.comparingInt(Game::getPrice);
+            attribute = "price";
+        }
+
+        switch (algorithm.toLowerCase()) {
+            case "bubblesort":
+                bubbleSort(comp);
+                break;
+            case "insertionsort":
+                insertionSort(comp);
+                break;
+            case "selectionsort":
+                selectionSort(comp);
+                break;
+            case "mergesort":
+                mergeSort(0, data.size() - 1, comp);
+                break;
+            case "quicksort":
+                quickSort(0, data.size() - 1, comp);
+                break;
+            case "countingsort":
+                if ("quality".equals(attribute)) {
+                    countingSort();
+                    return;
+                }
+                Collections.sort(data, comp);
+                break;
+            default:
+                Collections.sort(data, comp);
+        }
+        sortedByAttribute = attribute;
+    }
+
+    private Comparator<Game> getComparator(String attribute) {
+        switch (attribute.toLowerCase()) {
+            case "price":
+                return Comparator.comparingInt(Game::getPrice);
+            case "category":
+                return Comparator.comparing(Game::getCategory, String.CASE_INSENSITIVE_ORDER);
+            case "quality":
+                return Comparator.comparingInt(Game::getQuality);
+            case "nombre":
+                return Comparator.comparing(Game::getName);
+            default:
+                return null;
+        }
+    }
+
+    private void bubbleSort(Comparator<Game> comp) {
+        int n = data.size();
+        for (int i = 0; i < n - 1; i++)
+            for (int j = 0; j < n - i - 1; j++)
+                if (comp.compare(data.get(j), data.get(j + 1)) > 0)
+                    Collections.swap(data, j, j + 1);
+    }
+
+    private void insertionSort(Comparator<Game> comp) {
+        for (int i = 1; i < data.size(); i++) {
+            Game actual = data.get(i);
+            int j = i - 1;
+            while (j >= 0 && comp.compare(data.get(j), actual) > 0) {
+                data.set(j + 1, data.get(j));
+                j--;
+            }
+            data.set(j + 1, actual);
+        }
+    }
+
+    private void selectionSort(Comparator<Game> comp) {
+        for (int i = 0; i < data.size() - 1; i++) {
+            int min = i;
+            for (int j = i + 1; j < data.size(); j++)
+                if (comp.compare(data.get(j), data.get(min)) < 0)
+                    min = j;
+            Collections.swap(data, i, min);
+        }
+    }
+
+    private void mergeSort(int izq, int der, Comparator<Game> comp) {
+        if (izq < der) {
+            int medio = (izq + der) / 2;
+            mergeSort(izq, medio, comp);
+            mergeSort(medio + 1, der, comp);
+            merge(izq, medio, der, comp);
+        }
+    }
+
+    private void merge(int izq, int medio, int der, Comparator<Game> comp) {
+        List<Game> left = new ArrayList<>(data.subList(izq, medio + 1));
+        List<Game> right = new ArrayList<>(data.subList(medio + 1, der + 1));
+        int i = 0, j = 0, k = izq;
+        while (i < left.size() && j < right.size())
+            data.set(k++, comp.compare(left.get(i), right.get(j)) <= 0 ? left.get(i++) : right.get(j++));
+        while (i < left.size()) data.set(k++, left.get(i++));
+        while (j < right.size()) data.set(k++, right.get(j++));
+    }
+
+    private void quickSort(int izq, int der, Comparator<Game> comp) {
+        if (izq < der) {
+            int pi = partition(izq, der, comp);
+            quickSort(izq, pi - 1, comp);
+            quickSort(pi + 1, der, comp);
+        }
+    }
+
+    private int partition(int izq, int der, Comparator<Game> comp) {
+        Game pivot = data.get(der);
+        int i = izq - 1;
+        for (int j = izq; j < der; j++) {
+            if (comp.compare(data.get(j), pivot) <= 0) {
+                i++;
+                Collections.swap(data, i, j);
+            }
+        }
+        Collections.swap(data, i + 1, der);
+        return i + 1;
+    }
+
+    private void countingSort() {
+        int maxCalidad = 100;
+        int[] conteo = new int[maxCalidad + 1];
+        for (Game juego : data) {
+            conteo[juego.getQuality()]++;
+        }
+        for (int i = 1; i <= maxCalidad; i++) {
+            conteo[i] += conteo[i - 1];
+        }
+        Game[] ordenado = new Game[data.size()];
+        for (int i = data.size() - 1; i >= 0; i--) {
+            Game juego = data.get(i);
+            int pos = conteo[juego.getQuality()] - 1;
+            ordenado[pos] = juego;
+            conteo[juego.getQuality()]--;
+        }
+        data.clear();
+        Collections.addAll(data, ordenado);
+        sortedByAttribute = "quality";
+    }
+
+    public void printAll() {
+        for (Game g : data) {
+            System.out.println(g);
+        }
+    }
+}
+
+class GenerateData {
+    private static final String[] iniciales = {"Metro", "Half", "Call of", "Devil", "Yakuza", "Counter", "Project", "Monster", "DOOM", "Red Dead", "Cry of", "Portal", "Sea of"};
+    private static final String[] finales = {"Dragon", "Empire", "Quest", "Galaxy", "Legends", "Warrior", "", ""};
+    private static final String[] cats = {"Puzzle", "Shooter", "Estrategia", "RPG", "Deporte", "Simulación", "Terror", "SandBox", "Cooperativo", "Acción"};
+    private static final String[] sufijos = {"Ragnarok", "Rebirth", "Ultimate Edition", "Boosted", "Deluxe Edition"};
+    private static final String[] romanos = {"II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
+    private static final Random rand = new Random();
+
+    public static ArrayList<Game> generateGames(int n) {
+        ArrayList<Game> juegos = new ArrayList<>();
+        Set<String> usados = new HashSet<>();
+        for (int i = 0; i < n; i++) {
+            String palabra1 = iniciales[rand.nextInt(iniciales.length)];
+            String palabra2;
+            do {
+                palabra2 = finales[rand.nextInt(finales.length)];
+            } while (palabra1.equals(palabra2));
+            String base = palabra1 + " " + palabra2;
+            String nombre = base;
+            int intentos = 0;
+            while (usados.contains(nombre)) {
+                int tipo = rand.nextInt(3);
+                switch (tipo) {
+                    case 0:
+                        nombre = base + " " + romanos[rand.nextInt(romanos.length)];
+                        break;
+                    case 1:
+                        nombre = base + " " + sufijos[rand.nextInt(sufijos.length)];
+                        break;
+                    case 2:
+                        nombre = base + " " + (rand.nextInt(2025 - 2000) + 2000);
+                        break;
+                }
+                if (++intentos > 10) {
+                    break;
+                }
+            }
+            usados.add(nombre);
+            String cat = cats[rand.nextInt(cats.length)];
+            int precio = rand.nextInt(69001) + 1000;
+            int cal = rand.nextInt(101);
+            juegos.add(new Game(nombre, cat, precio, cal));
+        }
+        return juegos;
+    }
+
+    public static void save(ArrayList<Game> lista, String nombreArchivo) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(nombreArchivo))) {
+            pw.println("Nombre,Categoría,Precio,Calidad");
+            for (Game g : lista) {
+                pw.printf("%s,%s,%d,%d%n", g.getName(), g.getCategory(), g.getPrice(), g.getQuality());
+            }
+            System.out.println("Archivo guardado exitosamente: " + nombreArchivo);
+        } catch (IOException e) {
+            System.out.println("Error al guardar el archivo: " + e.getMessage());
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Generando datos...");
+        ArrayList<Game> games = GenerateData.generateGames(100);
+        Dataset ds = new Dataset(games);
+        
+        while (true) {
+            System.out.println("\n1) Mostrar todos los juegos" +
+                    "\n2) Ordenar" +
+                    "\n3) Buscar por precio" +
+                    "\n4) Buscar por rango de precio" +
+                    "\n5) Buscar por categoría" +
+                    "\n6) Buscar por calidad" +
+                    "\n7) Guardar datos en archivo" +
+                    "\n0) Salir");
+            System.out.print("Opción: ");
+            int op = sc.nextInt();
+            sc.nextLine(); 
+            
+            if (op == 0) 
+            break;
+            
+            switch (op) {
+                case 1:
+                    ds.printAll();
+                    break;
+                    
+                case 2:
+                    System.out.println("Seleccione algoritmo:" +
+                            "\n1) Bubble Sort" +
+                            "\n2) Insertion Sort" +
+                            "\n3) Selection Sort" +
+                            "\n4) Merge Sort" +
+                            "\n5) Quick Sort" +
+                            "\n6) Counting Sort (solo calidad)");
+                    int algOp = sc.nextInt();
+                    sc.nextLine();
+                    
+                    String alg;
+                    switch (algOp) {
+                        case 1: alg = "bubbleSort"; 
+                        break;
+                        case 2: alg = "insertionSort"; 
+                        break;
+                        case 3: alg = "selectionSort"; 
+                        break;
+                        case 4: alg = "mergeSort"; 
+                        break;
+                        case 5: alg = "quickSort"; 
+                        break;
+                        case 6: alg = "countingSort"; 
+                        break;
+                        
+                        default:
+                            System.out.println("Opción inválida");
+                            continue;
+                    }
+                    
+                    System.out.println("Seleccione atributo:" +
+                            "\n1) Precio" +
+                            "\n2) Categoría" +
+                            "\n3) Calidad" +
+                            "\n4) Nombre");
+                    int atrOp = sc.nextInt();
+                    sc.nextLine();
+                    
+                    String atr;
+                    switch (atrOp) {
+                        case 1: atr = "price"; 
+                        break;
+                        case 2: atr = "category"; 
+                        break;
+                        case 3: atr = "quality"; 
+                        break;
+                        case 4: atr = "nombre"; 
+                        break;
+                        default:
+                            System.out.println("Opción inválida");
+                            continue;
+                    }
+                    
+                    ds.sortByAlgorithm(alg, atr);
+                    System.out.println("Ordenado por " + atr + " usando " + alg);
+                    break;
+                    
+                case 3:
+                    System.out.print("Precio exacto: ");
+                    int p = sc.nextInt();
+                    sc.nextLine();
+                    ds.getGamesByPrice(p).forEach(System.out::println);
+                    break;
+                    
+                case 4:
+                    System.out.print("Precio mínimo: ");
+                    int p1 = sc.nextInt();
+                    System.out.print("Precio máximo: ");
+                    int p2 = sc.nextInt();
+                    sc.nextLine();
+                    ds.getGamesByPriceRange(p1, p2).forEach(System.out::println);
+                    break;
+                    
+                case 5:
+                    System.out.print("Categoría: ");
+                    String cat = sc.nextLine();
+                    ds.getGamesByCategory(cat).forEach(System.out::println);
+                    break;
+                    
+                case 6:
+                    System.out.print("Calidad: ");
+                    int cal = sc.nextInt();
+                    sc.nextLine();
+                    ds.getGamesByQuality(cal).forEach(System.out::println);
+                    break;
+                    
+                case 7:
+                    System.out.print("Nombre del archivo (ej: juegos.csv): ");
+                    String filename = sc.nextLine();
+                    GenerateData.save(games, filename);
+                    break;
+            }
+        }
+        sc.close();
+    }
+}
