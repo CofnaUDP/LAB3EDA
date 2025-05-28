@@ -302,7 +302,7 @@ class Dataset {
 
 class GenerateData {
     private static final String[] iniciales = {"Metro", "Half", "Call of", "Devil", "Yakuza", "Counter", "Project", "Monster", "DOOM", "Red Dead", "Cry of", "Portal", "Sea of"};
-    private static final String[] finales = {"Dragon", "Empire", "Quest", "Galaxy", "Legends", "Warrior", "", ""};
+    private static final String[] finales = {"Dragon", "Empire", "Quest", "Galaxy", "Legends", "Warrior", "Balatro", "Stalker"};
     private static final String[] cats = {"Puzzle", "Shooter", "Estrategia", "RPG", "Deporte", "Simulación", "Terror", "SandBox", "Cooperativo", "Acción"};
     private static final String[] sufijos = {"Ragnarok", "Rebirth", "Ultimate Edition", "Boosted", "Deluxe Edition"};
     private static final String[] romanos = {"II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
