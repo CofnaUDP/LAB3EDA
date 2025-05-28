@@ -1,0 +1,8 @@
+public class NanoTimer {
+    public static long medir(Runnable tarea) {
+        long inicio = System.nanoTime();
+        tarea.run();
+        long fin = System.nanoTime();
+        return (fin - inicio) / 1_000_000;
+    }
+}
